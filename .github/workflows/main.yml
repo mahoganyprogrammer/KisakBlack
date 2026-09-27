@@ -42,7 +42,7 @@ jobs:
 
     - name: Build Project (Release)
       run: |
-        cmake --build build --config Release -- /p:WarningLevel=0 /p:TreatWarningAsError=false /v:m
+        cmake --build build --config Release -- /v:q /p:ConsoleLoggerParameters=ErrorsOnly /p:WarningLevel=0 /p:TreatWarningAsError=false
 
     - name: Upload Built Executable Artifact
       uses: actions/upload-artifact@v4
