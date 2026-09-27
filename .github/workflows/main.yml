@@ -12,43 +12,46 @@ jobs:
     runs-on: windows-2022
 
     steps:
+    # 1. Clone repo (including submodules)
     - name: Checkout Repository
       uses: actions/checkout@v4
       with:
         submodules: recursive
 
+    # Setup MSVC for Visual Studio 17 2022
     - name: Setup MSVC Environment
       uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: x86
 
-    - name: Install DirectX SDK via NuGet
+    # Install DirectX SDK requirement
+    - name: Install DirectX SDK Requirements
       shell: powershell
       run: |
         nuget install Microsoft.DXSDK.D3DX -Version 9.29.952.8 -OutputDirectory C:\dxsdk
 
-    - name: Configure CMake
+    # 2. create a /build folder
+    # 3. CMAKE .. -G"Visual Studio 17 2022" -DCMAKE_GENERATOR_PLATFORM=WIN32
+    - name: Create build folder and Run CMake
       shell: powershell
       run: |
-        $env:DXSDK_DIR="C:\dxsdk\Microsoft.DXSDK.D3DX.9.29.952.8\build\native"
-        cmake -B build -G "Visual Studio 17 2022" `
+        mkdir build -ErrorAction SilentlyContinue
+        cd build
+        cmake .. -G "Visual Studio 17 2022" `
           -DCMAKE_GENERATOR_PLATFORM=WIN32 `
-          -DCMAKE_CXX_STANDARD=20 `
-          -DCMAKE_CXX_FLAGS_RELEASE="/W0 /w /wd4244 /wd4005 /std:c++20 /D_CRT_SECURE_NO_WARNINGS /IC:\dxsdk\Microsoft.DXSDK.D3DX.9.29.952.8\build\native\include" `
-          -DCMAKE_C_FLAGS_RELEASE="/W0 /w /wd4244 /wd4005 /D_CRT_SECURE_NO_WARNINGS /IC:\dxsdk\Microsoft.DXSDK.D3DX.9.29.952.8\build\native\include" `
-          -DCMAKE_EXE_LINKER_FLAGS_RELEASE="/LIBPATH:C:\dxsdk\Microsoft.DXSDK.D3DX.9.29.952.8\build\native\release\lib\x86" `
-          -DCMAKE_INCLUDE_PATH="C:/dxsdk/Microsoft.DXSDK.D3DX.9.29.952.8/build/native/include" `
-          -DCMAKE_LIBRARY_PATH="C:/dxsdk/Microsoft.DXSDK.D3DX.9.29.952.8/build/native/release/lib/x86"
+          -DCMAKE_CXX_FLAGS_RELEASE="/W0 /w /wd4244 /wd4005 /IC:\dxsdk\Microsoft.DXSDK.D3DX.9.29.952.8\build\native\include" `
+          -DCMAKE_C_FLAGS_RELEASE="/W0 /w /wd4244 /wd4005 /IC:\dxsdk\Microsoft.DXSDK.D3DX.9.29.952.8\build\native\include" `
+          -DCMAKE_EXE_LINKER_FLAGS_RELEASE="/LIBPATH:C:\dxsdk\Microsoft.DXSDK.D3DX.9.29.952.8\build\native\release\lib\x86"
 
-    - name: Build Project (Release)
+    # 4. Open generated .sln file & Build Release
+    - name: Build Solution (.sln) in Release
       run: |
-        cmake --build build --config Release -- /p:WarningLevel=0 /p:TreatWarningAsError=false /clp:NoWarnings;ErrorsOnly
+        cmake --build build --config Release -- /clp:NoWarnings;ErrorsOnly
 
-    - name: Upload Built Executable Artifact
+    # 5. Upload build artifacts (where you will copy BLOPS game files)
+    - name: Upload Compiled Build Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: KisakBlack-Executable
-        path: |
-          build/Release/*.exe
-          build/Release/*.dll
-        if-no-files-found: warn
+        name: KisakBlack-Build-Release
+        path: build/Release/
+        if-no-files-found: error
