@@ -18,29 +18,42 @@ jobs:
       with:
         submodules: recursive
 
-    # Setup MSVC for Visual Studio 17 2022
+    # Setup MSVC x86 environment
     - name: Setup MSVC Environment
       uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: x86
 
-    # Install DirectX SDK requirement
-    - name: Install DirectX SDK Requirements
+    # Install DirectX SDK (June 2010) via direct executable download
+    - name: Download & Extract DirectX SDK (June 2010)
       shell: powershell
       run: |
-        nuget install Microsoft.DXSDK.D3DX -Version 9.29.952.8 -OutputDirectory C:\dxsdk
+        $url = "https://download.microsoft.com/download/a/e/7/ae743f1f-632b-4809-87a9-aa1bb3458e31/DXSDK_Jun10.exe"
+        echo "Downloading DirectX SDK..."
+        Invoke-WebRequest -Uri $url -OutFile "DXSDK_Jun10.exe"
+        
+        echo "Extracting SDK contents..."
+        Start-Process -FilePath ".\DXSDK_Jun10.exe" -ArgumentList "/U /F /Q /T:C:\DXSDK" -Wait
+        
+        # Verify headers were extracted
+        if (Test-Path "C:\DXSDK\Include\dxerr.h") {
+          echo "DirectX SDK extracted successfully to C:\DXSDK"
+        } else {
+          echo "Extraction failed or unexpected directory structure."
+        }
 
-    # 2. Create /build folder & 3. Run CMake
+    # 2. Create build folder & 3. Run CMake
     - name: Create build folder and Run CMake
       shell: powershell
       run: |
+        $env:DXSDK_DIR="C:\DXSDK"
         mkdir build -ErrorAction SilentlyContinue
         cd build
         cmake .. -G "Visual Studio 17 2022" `
           -DCMAKE_GENERATOR_PLATFORM=WIN32 `
-          -DCMAKE_CXX_FLAGS_RELEASE="/W0 /w /wd4244 /wd4005 /IC:\dxsdk\Microsoft.DXSDK.D3DX.9.29.952.8\build\native\include" `
-          -DCMAKE_C_FLAGS_RELEASE="/W0 /w /wd4244 /wd4005 /IC:\dxsdk\Microsoft.DXSDK.D3DX.9.29.952.8\build\native\include" `
-          -DCMAKE_EXE_LINKER_FLAGS_RELEASE="/LIBPATH:C:\dxsdk\Microsoft.DXSDK.D3DX.9.29.952.8\build\native\release\lib\x86"
+          -DCMAKE_CXX_FLAGS_RELEASE="/W0 /w /wd4244 /wd4005 /IC:\DXSDK\Include" `
+          -DCMAKE_C_FLAGS_RELEASE="/W0 /w /wd4244 /wd4005 /IC:\DXSDK\Include" `
+          -DCMAKE_EXE_LINKER_FLAGS_RELEASE="/LIBPATH:C:\DXSDK\Lib\x86"
 
     # 4. Open generated .sln file & Build Release
     - name: Build Solution (.sln) in Release
