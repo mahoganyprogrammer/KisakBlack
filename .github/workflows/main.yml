@@ -22,13 +22,24 @@ jobs:
       with:
         arch: x86
 
+    - name: Install DirectX SDK via NuGet
+      shell: powershell
+      run: |
+        nuget install Microsoft.DXSDK.D3DX -Version 9.29.952.8 -OutputDirectory C:\dxsdk
+
     - name: Configure CMake
       run: |
-        cmake -B build -G "Visual Studio 17 2022" -DCMAKE_GENERATOR_PLATFORM=WIN32
+        cmake -B build -G "Visual Studio 17 2022" `
+          -DCMAKE_GENERATOR_PLATFORM=WIN32 `
+          -DCMAKE_CXX_STANDARD=20 `
+          -DCMAKE_CXX_FLAGS="/w /std:c++20" `
+          -DCMAKE_C_FLAGS="/w" `
+          -DCMAKE_INCLUDE_PATH="C:/dxsdk/Microsoft.DXSDK.D3DX.9.29.952.8/build/native/include" `
+          -DCMAKE_LIBRARY_PATH="C:/dxsdk/Microsoft.DXSDK.D3DX.9.29.952.8/build/native/release/lib/x86"
 
     - name: Build Project (Release)
       run: |
-        cmake --build build --config Release
+        cmake --build build --config Release -- /p:WarningLevel=0
 
     - name: Upload Built Executable Artifact
       uses: actions/upload-artifact@v4
