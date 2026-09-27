@@ -30,8 +30,7 @@ jobs:
       run: |
         nuget install Microsoft.DXSDK.D3DX -Version 9.29.952.8 -OutputDirectory C:\dxsdk
 
-    # 2. create a /build folder
-    # 3. CMAKE .. -G"Visual Studio 17 2022" -DCMAKE_GENERATOR_PLATFORM=WIN32
+    # 2. Create /build folder & 3. Run CMake
     - name: Create build folder and Run CMake
       shell: powershell
       run: |
@@ -45,10 +44,11 @@ jobs:
 
     # 4. Open generated .sln file & Build Release
     - name: Build Solution (.sln) in Release
+      shell: powershell
       run: |
-        cmake --build build --config Release -- /clp:NoWarnings;ErrorsOnly
+        cmake --build build --config Release -- "/clp:NoWarnings;ErrorsOnly"
 
-    # 5. Upload build artifacts (where you will copy BLOPS game files)
+    # 5. Upload build artifacts
     - name: Upload Compiled Build Artifacts
       uses: actions/upload-artifact@v4
       with:
