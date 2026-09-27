@@ -1,0 +1,49 @@
+name: Build KisakBlack
+
+on:
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2022
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup MSVC Environment
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x86
+
+    - name: Install DirectX SDK (June 2010)
+      shell: powershell
+      run: |
+        $url = "https://download.microsoft.com/download/A/E/7/AE743F6D-630A-4C01-954F-93F10E63FA87/directx_Jun2010_redist.exe"
+        Invoke-WebRequest -Uri $url -OutFile "dxredist.exe"
+        Start-Process -FilePath ".\dxredist.exe" -ArgumentList "/Q /T:$env:TEMP\dxredist" -Wait
+        $DXSDK = "$env:TEMP\dxredist"
+        # Extract headers and libraries directly into the runner environment if needed
+
+    - name: Configure CMake
+      run: |
+        cmake -B build -G "Visual Studio 17 2022" -DCMAKE_GENERATOR_PLATFORM=WIN32
+
+    - name: Build Project (Release)
+      run: |
+        cmake --build build --config Release
+
+    - name: Upload Built Executable Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: KisakBlack-Executable
+        path: |
+          build/Release/*.exe
+          build/Release/*.dll
+        if-no-files-found: error
