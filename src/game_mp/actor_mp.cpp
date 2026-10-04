@@ -385,7 +385,7 @@ actor_s *__cdecl Actor_Alloc()
         actor = &level.actors[i];
         if ( !actor->inuse )
         {
-            memset((unsigned __int8 *)actor, 0, sizeof(actor_s));
+            memset(actor, 0, sizeof(actor_s));
             actor->inuse = 1;
             Actor_SetDefaults(actor);
             return actor;
@@ -502,7 +502,7 @@ void __cdecl Actor_Free(actor_s *actor)
     actor->sentient = 0;
     Scr_FreeActorFields(actor);
     ent->s.lerp.u.actor.actorNum = 16;
-    memset((unsigned __int8 *)actor, 0xF0u, sizeof(actor_s));
+    memset(actor, 0xF0u, sizeof(actor_s));
     actor->inuse = 0;
 }
 
@@ -2677,7 +2677,7 @@ void __fastcall Actor_InitMove(actor_s *self)
         __debugbreak();
     }
 
-    memset((unsigned __int8 *)&self->Physics, 0, sizeof(self->Physics));
+    memset(&self->Physics, 0, sizeof(self->Physics));
 
     static colgeom_visitor_inlined_t<200> dummy_3;
     //if ( (_S2_8 & 1) == 0 )
@@ -3289,7 +3289,7 @@ double __cdecl Actor_CalcultatePlayerPushDelta(const actor_s *self, const gentit
     }
     if ( speed < 60.0 )
         speed = ACTOR_PLAYER_PUSH_MIN_SPEED;
-    return (float)(speed * 0.050000001);
+    return (float)(speed * 0.05f);
 }
 
 int __fastcall Actor_PhysicsCheckMoveAwayNoWorse(
@@ -4410,7 +4410,7 @@ void __fastcall Actor_PredictOriginAndAngles(actor_s *self)
     }
     Actor_UpdateAnglesAndDelta(self);
     Actor_DoMove(self);
-    SV_DObjInitServerTime(ent, 0.050000001);
+    SV_DObjInitServerTime(ent, 0.05f);
 }
 
 void __fastcall Actor_PredictAnim(actor_s *self)
